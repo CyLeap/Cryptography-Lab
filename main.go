@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// CLI flags
-	algo := flag.String("algo", "md5", "hash algorithm to use: md5 or sha1")
+	algo := flag.String("algo", "md5", "hash algorithm to use: md5, sha1, or sha512")
 	target := flag.String("hash", "6a85dfd77d9cb35770c9dc6728d73d3f", "target hash to crack")
 	wordlist := flag.String("wordlist", "nord_vpn.txt", "path to wordlist file")
 	verbose := flag.String("verbose", "verbose.txt", "path to verbose output file")
@@ -57,6 +57,10 @@ func main() {
 			}
 		case "sha1":
 			if crack.CheckSHA1(password, *target) {
+				match = true
+			}
+		case "sha512":
+			if crack.CheckSHA512(password, *target) {
 				match = true
 			}
 		default:

@@ -1,8 +1,8 @@
 package crack
 
 import (
-    "crypto/sha1"
-    "fmt"
+	"crypto/sha1"
+	"fmt"
 )
 
 // CheckSHA1 computes SHA1(password) and compares it to targetHash (hex lowercase)
