@@ -12,20 +12,18 @@ import (
 )
 
 func main() {
-	// Define command-line flags
 	var (
-		action     = flag.String("action", "", "Action to perform: init, create, list, get, update, delete")
-		name       = flag.String("name", "", "User name")
-		email      = flag.String("email", "", "User email")
-		phone      = flag.String("phone", "", "User phone")
-		address    = flag.String("address", "", "User address")
-		id         = flag.Int("id", 0, "User ID")
-		password   = flag.String("password", "", "Master password")
-		dbPath     = flag.String("db", "encrypted.db", "Database file path")
+		action   = flag.String("action", "", "Action: init, create, list, get, update, delete")
+		name     = flag.String("name", "", "User name")
+		email    = flag.String("email", "", "User email")
+		phone    = flag.String("phone", "", "User phone")
+		address  = flag.String("address", "", "User address")
+		id       = flag.Int("id", 0, "User ID")
+		password = flag.String("password", "", "Master password")
+		dbPath   = flag.String("db", "encrypted.db", "Database file path")
 	)
 	flag.Parse()
 
-	// Validate master password
 	if *password == "" {
 		log.Fatal("Master password is required. Use -password flag.")
 	}
@@ -34,15 +32,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Initialize database
 	db, err := database.NewDB(*dbPath)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		log.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Handle actions
 	switch *action {
+
 	case "init":
 		if err := db.Init(); err != nil {
 			log.Fatalf("Failed to initialize database: %v", err)
@@ -51,7 +48,7 @@ func main() {
 
 	case "create":
 		if *name == "" || *email == "" {
-			log.Fatal("Name and email are required for create action.")
+			log.Fatal("Name and email are required.")
 		}
 		user := models.NewUser(*name, *email, *phone, *address)
 		if err := db.CreateUser(user, *password); err != nil {
@@ -66,16 +63,15 @@ func main() {
 		}
 		if len(users) == 0 {
 			fmt.Println("No users found.")
-		} else {
-			for _, user := range users {
-				fmt.Println(utils.FormatUser(user))
-				fmt.Println("---")
-			}
+		}
+		for _, user := range users {
+			fmt.Println(utils.FormatUser(user))
+			fmt.Println("---")
 		}
 
 	case "get":
 		if *id == 0 {
-			log.Fatal("ID is required for get action.")
+			log.Fatal("ID is required.")
 		}
 		user, err := db.GetUser(*id, *password)
 		if err != nil {
@@ -85,13 +81,12 @@ func main() {
 
 	case "update":
 		if *id == 0 {
-			log.Fatal("ID is required for update action.")
+			log.Fatal("ID is required.")
 		}
 		user, err := db.GetUser(*id, *password)
 		if err != nil {
-			log.Fatalf("Failed to get user for update: %v", err)
+			log.Fatalf("Failed to get user: %v", err)
 		}
-		// Update fields if provided
 		if *name != "" {
 			user.Name = *name
 		}
@@ -107,25 +102,25 @@ func main() {
 		if err := db.UpdateUser(user, *password); err != nil {
 			log.Fatalf("Failed to update user: %v", err)
 		}
-		fmt.Println("User updated successfully.")
+		fmt.Println("User updated.")
 
 	case "delete":
 		if *id == 0 {
-			log.Fatal("ID is required for delete action.")
+			log.Fatal("ID is required.")
 		}
 		if err := db.DeleteUser(*id); err != nil {
 			log.Fatalf("Failed to delete user: %v", err)
 		}
-		fmt.Println("User deleted successfully.")
+		fmt.Println("User deleted.")
 
 	default:
 		fmt.Println("Usage:")
-		fmt.Println("  -action=init -password=<password> [-db=<db_path>]")
-		fmt.Println("  -action=create -name=<name> -email=<email> [-phone=<phone>] [-address=<address>] -password=<password> [-db=<db_path>]")
-		fmt.Println("  -action=list -password=<password> [-db=<db_path>]")
-		fmt.Println("  -action=get -id=<id> -password=<password> [-db=<db_path>]")
-		fmt.Println("  -action=update -id=<id> [-name=<name>] [-email=<email>] [-phone=<phone>] [-address=<address>] -password=<password> [-db=<db_path>]")
-		fmt.Println("  -action=delete -id=<id> -password=<password> [-db=<db_path>]")
+		fmt.Println("  -action=init -password=<password>")
+		fmt.Println("  -action=create -name=<name> -email=<email> -password=<password>")
+		fmt.Println("  -action=list -password=<password>")
+		fmt.Println("  -action=get -id=<id> -password=<password>")
+		fmt.Println("  -action=update -id=<id> -password=<password>")
+		fmt.Println("  -action=delete -id=<id> -password=<password>")
 		os.Exit(1)
 	}
 }

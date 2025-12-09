@@ -10,7 +10,8 @@ import (
 	"encrypted-db/internal/encryption"
 	"encrypted-db/internal/models"
 
-	_"github.com/mattn/go-sqlite3"
+	_"modernc.org/sqlite"
+
 )
 
 // DB represents the database connection
@@ -27,7 +28,7 @@ func NewDB(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
 	}
 
-	conn, err := sql.Open("sqlite3", dbPath)
+	conn, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
