@@ -10,8 +10,7 @@ import (
 	"encrypted-db/internal/encryption"
 	"encrypted-db/internal/models"
 
-	_"modernc.org/sqlite"
-
+	_ "modernc.org/sqlite"
 )
 
 // DB represents the database connection
@@ -66,6 +65,47 @@ func (db *DB) Init() error {
 	}
 
 	return nil
+}
+
+// ListEncryptedUsers retrieves all users with encrypted data
+func (db *DB) ListEncryptedUsers() ([]map[string]interface{}, error) {
+	query := `
+	SELECT id, name, email_encrypted, phone_encrypted, address_encrypted, created_at, updated_at
+	FROM users ORDER BY created_at DESC
+	`
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []map[string]interface{}
+
+	for rows.Next() {
+		var id int
+		var name, emailEncrypted, phoneEncrypted, addressEncrypted string
+		var createdAt, updatedAt time.Time
+
+		err := rows.Scan(&id, &name, &emailEncrypted, &phoneEncrypted, &addressEncrypted, &createdAt, &updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+
+		user := map[string]interface{}{
+			"id":                 id,
+			"name":               name,
+			"email_encrypted":    emailEncrypted,
+			"phone_encrypted":    phoneEncrypted,
+			"address_encrypted":  addressEncrypted,
+			"created_at":         createdAt,
+			"updated_at":         updatedAt,
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 
 // CreateUser creates a new user in the database

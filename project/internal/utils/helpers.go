@@ -4,7 +4,9 @@ import (
 	"encrypted-db/internal/models"
 	"fmt"
 	"os"
-	"strings"
+	"syscall"
+
+	"golang.org/x/term"
 )
 
 // GetEnv gets an environment variable or returns a default value
@@ -15,18 +17,49 @@ func GetEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// PromptPassword prompts the user for a password (basic implementation)
+// PromptPassword prompts the user for a password with masked input
 func PromptPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
-	var password string
-	fmt.Scanln(&password)
-	return strings.TrimSpace(password), nil
+	password, err := term.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		return "", err
+	}
+	fmt.Println() // Print a newline after password input
+	return string(password), nil
 }
 
-// ValidatePassword performs basic password validation
+// ValidatePassword performs comprehensive password validation
 func ValidatePassword(password string) error {
-	if len(password) < 8 {
-		return fmt.Errorf("password must be at least 8 characters long")
+	if len(password) < 8 || len(password) > 12 {
+		return fmt.Errorf("password must be between 8 and 12 characters long")
+	}
+	hasUpper := false
+	hasLower := false
+	hasNumber := false
+	hasSymbol := false
+	for _, char := range password {
+		switch {
+		case char >= 'A' && char <= 'Z':
+			hasUpper = true
+		case char >= 'a' && char <= 'z':
+			hasLower = true
+		case char >= '0' && char <= '9':
+			hasNumber = true
+		case (char >= '!' && char <= '/') || (char >= ':' && char <= '@') || (char >= '[' && char <= '`') || (char >= '{' && char <= '~'):
+			hasSymbol = true
+		}
+	}
+	if !hasUpper {
+		return fmt.Errorf("password must contain at least one uppercase letter")
+	}
+	if !hasLower {
+		return fmt.Errorf("password must contain at least one lowercase letter")
+	}
+	if !hasNumber {
+		return fmt.Errorf("password must contain at least one number")
+	}
+	if !hasSymbol {
+		return fmt.Errorf("password must contain at least one symbol")
 	}
 	return nil
 }

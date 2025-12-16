@@ -24,11 +24,18 @@ func main() {
 	)
 	flag.Parse()
 
-	if *password == "" {
-		log.Fatal("Master password is required. Use -password flag.")
+	var masterPassword string
+	if *password != "" {
+		masterPassword = *password
+	} else {
+		var err error
+		masterPassword, err = utils.PromptPassword("Enter master password: ")
+		if err != nil {
+			log.Fatalf("Failed to read password: %v", err)
+		}
 	}
 
-	if err := utils.ValidatePassword(*password); err != nil {
+	if err := utils.ValidatePassword(masterPassword); err != nil {
 		log.Fatal(err)
 	}
 
@@ -115,12 +122,13 @@ func main() {
 
 	default:
 		fmt.Println("Usage:")
-		fmt.Println("  -action=init -password=<password>")
-		fmt.Println("  -action=create -name=<name> -email=<email> -password=<password>")
-		fmt.Println("  -action=list -password=<password>")
-		fmt.Println("  -action=get -id=<id> -password=<password>")
-		fmt.Println("  -action=update -id=<id> -password=<password>")
-		fmt.Println("  -action=delete -id=<id> -password=<password>")
+		fmt.Println("  -action=init")
+		fmt.Println("  -action=create -name=<name> -email=<email>")
+		fmt.Println("  -action=list")
+		fmt.Println("  -action=rawlist")
+		fmt.Println("  -action=get -id=<id>")
+		fmt.Println("  -action=update -id=<id>")
+		fmt.Println("  -action=delete -id=<id>")
 		os.Exit(1)
 	}
 }

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 )
 
@@ -30,13 +31,29 @@ func NewUser(name, email, phone, address string) *User {
 
 // Validate checks if the user data is valid
 func (u *User) Validate() error {
-	if u.Name == "" {
-		return ErrInvalidName
+	if len(u.Name) < 2 || len(u.Name) > 50 {
+		return &ValidationError{"name must be between 2 and 50 characters"}
 	}
-	if u.Email == "" {
-		return ErrInvalidEmail
+	if !strings.Contains(u.Email, "@gmail.com") {
+		return &ValidationError{"email must be a valid Gmail address"}
+	}
+	if u.Phone != "" && (len(u.Phone) < 8 || len(u.Phone) > 10 || !isNumeric(u.Phone)) {
+		return &ValidationError{"phone must be 8-10 digits"}
+	}
+	if u.Address == "" {
+		return &ValidationError{"address cannot be empty"}
 	}
 	return nil
+}
+
+// isNumeric checks if a string contains only digits
+func isNumeric(s string) bool {
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // Errors
