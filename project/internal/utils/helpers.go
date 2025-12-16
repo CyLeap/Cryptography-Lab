@@ -4,9 +4,14 @@ import (
 	"encrypted-db/internal/models"
 	"fmt"
 	"os"
-	"syscall"
+	"regexp"
 
-	"golang.org/x/term"
+	"github.com/howeyc/gopass"
+)
+
+const (
+	MinPasswordLength = 8
+	MaxPasswordLength = 12
 )
 
 // GetEnv gets an environment variable or returns a default value
@@ -20,35 +25,26 @@ func GetEnv(key, defaultValue string) string {
 // PromptPassword prompts the user for a password with masked input
 func PromptPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
-	password, err := term.ReadPassword(int(syscall.Stdin))
+	password, err := gopass.GetPasswdMasked()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read password: %v", err) // Wrapping the error for better clarity
 	}
-	fmt.Println() // Print a newline after password input
 	return string(password), nil
 }
 
 // ValidatePassword performs comprehensive password validation
 func ValidatePassword(password string) error {
-	if len(password) < 8 || len(password) > 12 {
-		return fmt.Errorf("password must be between 8 and 12 characters long")
+	if len(password) < MinPasswordLength || len(password) > MaxPasswordLength {
+		return fmt.Errorf("password must be between %d and %d characters long", MinPasswordLength, MaxPasswordLength)
 	}
-	hasUpper := false
-	hasLower := false
-	hasNumber := false
-	hasSymbol := false
-	for _, char := range password {
-		switch {
-		case char >= 'A' && char <= 'Z':
-			hasUpper = true
-		case char >= 'a' && char <= 'z':
-			hasLower = true
-		case char >= '0' && char <= '9':
-			hasNumber = true
-		case (char >= '!' && char <= '/') || (char >= ':' && char <= '@') || (char >= '[' && char <= '`') || (char >= '{' && char <= '~'):
-			hasSymbol = true
-		}
-	}
+
+	// Regex for checking upper, lower, digit, and symbol
+	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(password)
+	hasSymbol := regexp.MustCompile(`[!@#$%^&*(),.?":{}|<>]`).MatchString(password)
+
+	// Checking conditions
 	if !hasUpper {
 		return fmt.Errorf("password must contain at least one uppercase letter")
 	}
@@ -61,6 +57,7 @@ func ValidatePassword(password string) error {
 	if !hasSymbol {
 		return fmt.Errorf("password must contain at least one symbol")
 	}
+
 	return nil
 }
 
