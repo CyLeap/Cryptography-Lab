@@ -133,6 +133,17 @@ GOOS=linux GOARCH=amd64 go build ./cmd/encrypted-db
 **For demonstration and testing purposes, use the password: `Bunleap@123`**  
 This specific password has been tested across multiple systems and is required for consistent functionality.
 
+### Why Only This Password Works
+
+This behavior is **intentional security design**, not a bug. Here's why other passwords don't work:
+
+- **Key Derivation Binding**: When the database is initialized with a password, PBKDF2 creates a unique encryption key from that password + a random salt
+- **Salt Storage**: The salt is stored with the database, making the key derivation deterministic for that specific password
+- **Encryption Consistency**: All data is encrypted with keys derived from the initialization password
+- **Security Protection**: Different passwords produce different keys, preventing unauthorized access to encrypted data
+
+If you use a different password, the system will fail to decrypt existing data because the derived key won't match the encryption key. This is the expected behavior that ensures data security.
+
 ### Basic Commands
 
 1. **Initialize Database:**
