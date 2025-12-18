@@ -110,12 +110,23 @@ func (db *DB) ListEncryptedUsers() ([]map[string]interface{}, error) {
 
 // CreateUser creates a new user in the database
 func (db *DB) CreateUser(user *models.User, masterPassword string) error {
-	// Encrypt sensitive fields
+	// Check if email already exists
+	var count int
+	emailCheckQuery := `SELECT COUNT(*) FROM users WHERE email_encrypted = ?`
 	emailEncrypted, err := encryption.Encrypt(user.Email, masterPassword)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt email: %w", err)
+		return fmt.Errorf("failed to encrypt email for check: %w", err)
 	}
 
+	err = db.conn.QueryRow(emailCheckQuery, emailEncrypted).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check email uniqueness: %w", err)
+	}
+	if count > 0 {
+		return fmt.Errorf("email already exists")
+	}
+
+	// Encrypt sensitive fields
 	phoneEncrypted, err := encryption.Encrypt(user.Phone, masterPassword)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt phone: %w", err)
@@ -232,12 +243,23 @@ func (db *DB) ListUsers(masterPassword string) ([]*models.User, error) {
 
 // UpdateUser updates a user
 func (db *DB) UpdateUser(user *models.User, masterPassword string) error {
-	// Encrypt sensitive fields
+	// Check if email already exists for another user
+	var count int
+	emailCheckQuery := `SELECT COUNT(*) FROM users WHERE email_encrypted = ? AND id != ?`
 	emailEncrypted, err := encryption.Encrypt(user.Email, masterPassword)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt email: %w", err)
+		return fmt.Errorf("failed to encrypt email for check: %w", err)
 	}
 
+	err = db.conn.QueryRow(emailCheckQuery, emailEncrypted, user.ID).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check email uniqueness: %w", err)
+	}
+	if count > 0 {
+		return fmt.Errorf("email already exists for another user")
+	}
+
+	// Encrypt sensitive fields
 	phoneEncrypted, err := encryption.Encrypt(user.Phone, masterPassword)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt phone: %w", err)

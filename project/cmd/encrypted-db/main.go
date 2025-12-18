@@ -19,13 +19,14 @@ func main() {
 		phone    = flag.String("phone", "", "User phone")
 		address  = flag.String("address", "", "User address")
 		id       = flag.Int("id", 0, "User ID")
-		password = flag.String("password", "", "Master password")
+		password = flag.String("password", "", "Master password (WARNING: visible in shell history)")
 		dbPath   = flag.String("db", "encrypted.db", "Database file path")
 	)
 	flag.Parse()
 
 	var masterPassword string
 	if *password != "" {
+		fmt.Println("WARNING: Using password from command line flag. This may be visible in shell history.")
 		masterPassword = *password
 	} else {
 		var err error
@@ -58,13 +59,16 @@ func main() {
 			log.Fatal("Name and email are required.")
 		}
 		user := models.NewUser(*name, *email, *phone, *address)
-		if err := db.CreateUser(user, *password); err != nil {
+		if err := user.Validate(); err != nil {
+			log.Fatalf("Validation failed: %v", err)
+		}
+		if err := db.CreateUser(user, masterPassword); err != nil {
 			log.Fatalf("Failed to create user: %v", err)
 		}
 		fmt.Printf("User created with ID: %d\n", user.ID)
 
 	case "list":
-		users, err := db.ListUsers(*password)
+		users, err := db.ListUsers(masterPassword)
 		if err != nil {
 			log.Fatalf("Failed to list users: %v", err)
 		}
@@ -80,7 +84,7 @@ func main() {
 		if *id == 0 {
 			log.Fatal("ID is required.")
 		}
-		user, err := db.GetUser(*id, *password)
+		user, err := db.GetUser(*id, masterPassword)
 		if err != nil {
 			log.Fatalf("Failed to get user: %v", err)
 		}
@@ -90,7 +94,7 @@ func main() {
 		if *id == 0 {
 			log.Fatal("ID is required.")
 		}
-		user, err := db.GetUser(*id, *password)
+		user, err := db.GetUser(*id, masterPassword)
 		if err != nil {
 			log.Fatalf("Failed to get user: %v", err)
 		}
@@ -106,7 +110,10 @@ func main() {
 		if *address != "" {
 			user.Address = *address
 		}
-		if err := db.UpdateUser(user, *password); err != nil {
+		if err := user.Validate(); err != nil {
+			log.Fatalf("Validation failed: %v", err)
+		}
+		if err := db.UpdateUser(user, masterPassword); err != nil {
 			log.Fatalf("Failed to update user: %v", err)
 		}
 		fmt.Println("User updated.")

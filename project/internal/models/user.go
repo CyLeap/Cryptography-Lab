@@ -34,13 +34,13 @@ func (u *User) Validate() error {
 	if len(u.Name) < 2 || len(u.Name) > 50 {
 		return &ValidationError{"name must be between 2 and 50 characters"}
 	}
-	if !strings.Contains(u.Email, "@gmail.com") {
-		return &ValidationError{"email must be a valid Gmail address"}
+	if !strings.HasSuffix(strings.ToLower(u.Email), "@gmail.com") {
+		return &ValidationError{"email must be a valid Gmail address ending with @gmail.com"}
 	}
-	if u.Phone != "" && (len(u.Phone) < 8 || len(u.Phone) > 10 || !isNumeric(u.Phone)) {
-		return &ValidationError{"phone must be 8-10 digits"}
+	if u.Phone != "" && (len(u.Phone) < 10 || len(u.Phone) > 15 || !isNumeric(u.Phone)) {
+		return &ValidationError{"phone must be 10-15 digits only (no letters)"}
 	}
-	if u.Address == "" {
+	if len(strings.TrimSpace(u.Address)) == 0 {
 		return &ValidationError{"address cannot be empty"}
 	}
 	return nil
