@@ -128,6 +128,11 @@ GOOS=linux GOARCH=amd64 go build ./cmd/encrypted-db
 
 ## 📖 Usage
 
+### Important Note for Testing
+
+**For demonstration and testing purposes, use the password: `Bunleap@123`**  
+This specific password has been tested across multiple systems and is required for consistent functionality.
+
 ### Basic Commands
 
 1. **Initialize Database:**
